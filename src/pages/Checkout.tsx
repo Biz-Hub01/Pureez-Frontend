@@ -237,6 +237,9 @@ const Checkout = () => {
       setCheckoutRequestId(checkoutRequestId);
       setPaymentStatus('waiting');
 
+      // Wait 30 seconds before starting verification
+      await new Promise(resolve => setTimeout(resolve, 20000));
+
       // Start payment verification
       startPaymentVerification(checkoutRequestId);
 
@@ -280,7 +283,7 @@ const Checkout = () => {
     }
 
   let attempts = 0;
-  const maxAttempts = 36; // 3 minutes (5s * 36)
+  const maxAttempts = 18; // 3 minutes (5s * 36)
 
     verificationIntervalRef.current = setInterval(async () => {
       try {
@@ -314,7 +317,16 @@ const Checkout = () => {
             description: "Payment was not completed",
             variant: "destructive"
           });
-        } else if (attempts >= maxAttempts) {
+        } else if (response.data.status === 'pending') {
+        // Continue polling - no action needed
+        console.log(`Payment ${checkoutRequestId} still pending...`);
+      }
+      else {
+        // Handle unknown status
+        console.warn("Unknown payment status:", response.data.status);
+      }
+       
+      if (attempts >= maxAttempts) {
           clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
           setPaymentStatus('failed');
           toast({
@@ -325,6 +337,7 @@ const Checkout = () => {
         }
       } catch (error) {
         console.error("Payment verification error:", error);
+        
         if (attempts >= maxAttempts) {
         clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
         setPaymentStatus('failed');
@@ -335,7 +348,7 @@ const Checkout = () => {
         });
       }
       }
-    }, 5000); // Check every 5 seconds
+    }, 10000); // Check every 5 seconds
   };
 
   const createOrder = async (paymentReference: string | null): Promise<string> => {
