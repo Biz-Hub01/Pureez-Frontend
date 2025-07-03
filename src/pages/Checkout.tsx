@@ -287,8 +287,7 @@ const Checkout = () => {
         attempts++;
 
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/mpesa/payment-status/${checkoutRequestId}`,
-          { timeout: 10000 }
+          `${import.meta.env.VITE_BACKEND_URL}/api/mpesa/payment-status/${checkoutRequestId}`
         );
 
         if (response.data.status === 'success') {
