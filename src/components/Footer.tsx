@@ -50,10 +50,6 @@ const Footer = () => {
                 <Link to="/contact" className="text-sm text-foreground/70 hover:text-primary transition-colors">Contact</Link>
               </li>
               <li>
-                <Link to="/admin-dashboard" className="text-sm text-foreground/70 hover:text-primary transition-colors flex items-center">
-                  <ShieldCheck className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  Admin Dashboard
-                </Link>
               </li>
             </ul>
           </div>

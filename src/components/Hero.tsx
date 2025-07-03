@@ -4,20 +4,20 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="relative pt-20 pb-16 sm:pt-28 sm:pb-20 md:pt-36 md:pb-24 lg:pt-44 lg:pb-28 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-secondary/50 to-background z-0" />
+    <section className="relative pt-10 pb-16 sm:pt-28 sm:pb-20 md:pt-36 md:pb-24 lg:pt-44 lg:pb-28 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary/0 to-background z-0" />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-block animate-fade-in">
-            <span className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium">
+            <span className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-orangeBrand/10 text-orangeBrand text-xs sm:text-sm font-medium">
               A better way to buy & sell
             </span>
           </div>
           
           <h1 className="mt-4 sm:mt-6 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight animate-fade-in animate-delay-100 leading-tight">
             Declutter your space.<br />
-            <span className="text-primary">Find treasures</span>.
+            <span className="text-orangeBrand">Find treasures.</span>
           </h1>
           
           <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-foreground/80 leading-relaxed max-w-2xl mx-auto animate-fade-in animate-delay-200 px-2">

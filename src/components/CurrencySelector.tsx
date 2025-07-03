@@ -24,7 +24,7 @@ const CurrencySelector = ({ variant = "default" }: CurrencySelectorProps) => {
 
   return (
     <Select value={currentCurrency.code} onValueChange={handleCurrencyChange}>
-      <SelectTrigger className={variant === "navbar" ? "w-[80px] h-9 text-sm bg-transparent border-none hover:bg-secondary/50 focus:ring-0" : "w-[140px]"}>
+      <SelectTrigger className={variant === "navbar" ? "w-[70px] h-8 text-sm bg-transparent border hover:bg-secondary/50 focus:ring-0" : "w-[140px]"}>
         <SelectValue placeholder="Currency" />
       </SelectTrigger>
       <SelectContent className="max-h-[300px]">

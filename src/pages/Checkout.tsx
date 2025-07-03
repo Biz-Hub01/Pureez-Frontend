@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Accordion,
@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import WhatsAppCheckout from "@/components/WhatsAppCheckout";
 import axios from "axios";
+import { supabase } from "@/integrations/supabase/client";
 
 const deliveryOptions = [
   { 
@@ -105,6 +106,20 @@ const Checkout = () => {
   const { cartItems, clearCart } = useCart();
   const { formatPrice, convertPrice } = useCurrency();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'waiting' | 'success' | 'failed'>('idle');
+  const [checkoutRequestId, setCheckoutRequestId] = useState<string>('');
+  const verificationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const paymentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const currentInterval = verificationIntervalRef.current;
+
+    return () => {
+      if (currentInterval) {
+        clearInterval(currentInterval);
+      }
+    };
+  }, []);
 
   // Load saved address from localStorage if available
   useEffect(() => {
@@ -196,19 +211,19 @@ const Checkout = () => {
     }
   };
 
-    const initiateMpesaPayment = async () => {
-    setIsProcessing(true);
+
+    const initiateMpesaPayment = async (): Promise<boolean> => {
+      setPaymentStatus('processing');
     
     try {
-       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const callbackUrl = import.meta.env.VITE_MPESA_CALLBACK_URL;
-    
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const amount = Math.round(total);
+
     const response = await axios.post(
       `${backendUrl}/api/mpesa/payment`,
       {
         phone: mpesaPhone,
-        amount: Math.round(total),
-        callbackUrl
+        amount: amount
       }
     );
       
@@ -217,6 +232,14 @@ const Checkout = () => {
         title: "Payment Request Sent",
         description: "Please check your phone to complete the M-Pesa payment",
       });
+
+      const checkoutRequestId = response.data.CheckoutRequestID;
+      setCheckoutRequestId(checkoutRequestId);
+      setPaymentStatus('waiting');
+
+      // Start payment verification
+      startPaymentVerification(checkoutRequestId);
+
       return true;
     } else {
       toast({
@@ -224,50 +247,148 @@ const Checkout = () => {
         description: response.data.ResponseDescription || "Failed to initiate payment",
         variant: "destructive"
       });
+      setPaymentStatus('failed');
       return false;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("M-Pesa payment error:", error);
+
+    let errorMessage = "Failed to process payment";
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (error.code === "ECONNABORTED") {
+      errorMessage = "Request timed out";
+      }
+
     toast({
       title: "Payment Error",
-      description: error.response?.data?.error || "Failed to process payment",
+      description: errorMessage,
       variant: "destructive"
     });
+
+    setPaymentStatus('failed');
     return false;
-  } finally {
-    setIsProcessing(false);
   }  
   };
 
+  // Update startPaymentVerification to include orderId
+  const startPaymentVerification = (checkoutRequestId: string) => {
+   if (verificationIntervalRef.current) {
+      clearInterval(verificationIntervalRef.current);
+    }
 
-  const completeOrder = async () => {
+  let attempts = 0;
+  const maxAttempts = 36; // 3 minutes (5s * 36)
+
+    verificationIntervalRef.current = setInterval(async () => {
+      try {
+        attempts++;
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/mpesa/payment-status/${checkoutRequestId}`,
+          { timeout: 10000 }
+        );
+
+        if (response.data.status === 'success') {
+          clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
+          setPaymentStatus('success');
+
+          // Create order only after successful payment verification
+          const orderId = await createOrder(checkoutRequestId);
+          if (orderId) {
+            clearCart();
+            navigate(`/order-confirmation/${orderId}`);
+          } else {
+          toast({
+            title: "Order Creation Failed",
+            description: "Payment succeeded but order could not be created",
+            variant: "destructive"
+          });
+        }
+        } else if (response.data.status === 'failed') {
+          clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
+          setPaymentStatus('failed');
+          toast({
+            title: "Payment Failed",
+            description: "Payment was not completed",
+            variant: "destructive"
+          });
+        } else if (attempts >= maxAttempts) {
+          clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
+          setPaymentStatus('failed');
+          toast({
+            title: "Payment Timeout",
+            description: "Payment verification timed out",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Payment verification error:", error);
+        if (attempts >= maxAttempts) {
+        clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
+        setPaymentStatus('failed');
+        toast({
+          title: "Verification Error",
+          description: "Failed to verify payment status",
+          variant: "destructive"
+        });
+      }
+      }
+    }, 5000); // Check every 5 seconds
+  };
+
+  const createOrder = async (paymentReference: string | null): Promise<string> => {
     try {
-      let paymentSuccess = true;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+      
+      const orderItems = cartItems.map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image
+      }));
+      
+      const { data: order, error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          status: paymentMethod === "mpesa" ? 'processing' : 'completed',
+          total,
+          shipping_info: shippingInfo,
+          payment_method: paymentMethod,
+          items: orderItems,
+          delivery_option: selectedDelivery,
+          payment_reference: paymentReference
+        })
+        .select('id')
+        .single();
 
-      if (paymentMethod === "mpesa") {
-        paymentSuccess = await initiateMpesaPayment();
-      } else {
+      if (error) throw error;
+      return order.id;
+    } catch (error) {
+      console.error("Order creation error:", error);
+      return "";
+    }
+  };
+
+const completeOrder = async () => {
+    if (paymentMethod === "mpesa") {
+      await initiateMpesaPayment();
+    } else {
+      setPaymentStatus('processing');
+      const orderId = await createOrder(null);
+      if (orderId) {
+        clearCart();
+        navigate(`/order-confirmation/${orderId}`);
         toast({
           title: "Order Placed Successfully!",
           description: "Your items will be on their way soon.",
         });
       }
-      
-      if (paymentSuccess) {     
-      // Clear the cart
-      clearCart();
-    
-    // Navigate to order confirmation page
-    // Using a random order ID for demo purposes
-    const orderId = Math.floor(Math.random() * 10000000);
-    navigate(`/order-confirmation/${orderId}`);
-    }
-  } catch (error) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to complete order. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -743,14 +864,18 @@ const Checkout = () => {
                     </Button>
                     <Button 
                       onClick={completeOrder}
-                      disabled={isProcessing}
+                      disabled={paymentStatus === 'processing' || paymentStatus === 'waiting'}
                     >
-                      {isProcessing ? (
+                      {paymentStatus === 'processing' ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : paymentStatus === 'waiting' ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
                         <Check className="mr-2 h-4 w-4" />
                       )}
-                      {isProcessing ? "Processing..." : "Place Order"}
+                      {paymentStatus === 'processing' ? "Processing..." : 
+                      paymentStatus === 'waiting' ? "Waiting for Payment..." : 
+                      "Place Order"}
                     </Button>
                   </div>
                 </AccordionContent>

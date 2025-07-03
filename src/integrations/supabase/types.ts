@@ -96,6 +96,46 @@ export type Database = {
         }
         Relationships: []
       }
+      // Add this to the Tables section
+orders: {
+  Row: {
+    id: string;
+    created_at: string;
+    user_id: string;
+    status: string;
+    total: number;
+    shipping_info: Json;
+    payment_method: string;
+    items: Json;
+    delivery_option: string;
+    payment_reference: string | null;
+  };
+  Insert: {
+    id?: string;
+    created_at?: string;
+    user_id: string;
+    status: string;
+    total: number;
+    shipping_info: Json;
+    payment_method: string;
+    items: Json;
+    delivery_option: string;
+    payment_reference?: string | null;
+  };
+  Update: {
+    id?: string;
+    created_at?: string;
+    user_id?: string;
+    status?: string;
+    total?: number;
+    shipping_info?: Json;
+    payment_method?: string;
+    items?: Json;
+    delivery_option?: string;
+    payment_reference?: string | null;
+  };
+  Relationships: [];
+}
       seller_auctions: {
         Row: {
           created_at: string

@@ -265,6 +265,15 @@ const Catalog = () => {
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="mb-6 relative">
           <div className="flex gap-4 relative">
+            <Button
+              type="button"
+              variant={showFilters ? "default" : "outline"}
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 py-5 px-6 text-base"
+            >
+              <SlidersHorizontal size={20} />
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </Button>
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/50" size={20} />
               <Input
@@ -296,16 +305,6 @@ const Catalog = () => {
 
             </div>
             <Button type="submit" className="py-5 px-6 text-base">Search</Button>
-            
-            <Button
-              type="button"
-              variant={showFilters ? "default" : "outline"}
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 py-5 px-6 text-base"
-            >
-              <SlidersHorizontal size={20} />
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </Button>
           </div>
         </form>
 

@@ -4,9 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import FeaturedCategories from "@/components/FeaturedCategories";
-import TrendingProducts from "@/components/TrendingProducts";
 import SellerCTA from "@/components/SellerCTA";
-import Testimonials from "@/components/Testimonials";
 
 const Index = () => {
   // Scroll to top when the page loads
@@ -21,9 +19,7 @@ const Index = () => {
       <main className="flex-1">
         <Hero />
         <FeaturedCategories />
-        <TrendingProducts />
         <SellerCTA />
-        <Testimonials />
       </main>
       
       <Footer />

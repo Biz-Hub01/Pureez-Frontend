@@ -13,6 +13,11 @@ type DeliveryStep = {
 type DeliveryTrackingProps = {
   orderId: string;
   estimatedDelivery: string;
+  status: string; // Add this
+  deliveryOption: { // Add this
+    name: string;
+    description: string;
+  };
 };
 
 const DeliveryTracking = ({ orderId, estimatedDelivery }: DeliveryTrackingProps) => {
