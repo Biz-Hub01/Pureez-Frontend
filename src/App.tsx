@@ -16,10 +16,10 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
-import SellerDashboard from './pages/SellerDashboard';
+// import SellerDashboard from './pages/SellerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSalesAnalytics from './pages/AdminSalesAnalytics';
-import SellerListItem from './pages/SellerListItem';
+// import SellerListItem from './pages/SellerListItem';
 import SellerVerification from './pages/SellerVerification';
 import AdminPostProduct from './pages/AdminPostProduct';
 import AdminOfferCreate from './pages/AdminOfferCreate';
@@ -36,6 +36,7 @@ import { CartProvider } from './context/CartContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { Toaster } from '@/components/ui/toaster';
+import AdminEditProduct from './pages/AdminEditProduct';
 
 function App() {
   return (
@@ -57,8 +58,8 @@ function App() {
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                <Route path="/seller-dashboard" element={<SellerDashboard />} />
-                <Route path="/seller-list-item" element={<SellerListItem />} />
+                {/* <Route path="/seller-dashboard" element={<SellerDashboard />} /> */}
+                {/* <Route path="/seller-list-item" element={<SellerListItem />} /> */}
                 <Route path="/seller-verification" element={<SellerVerification />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/customer-support" element={<CustomerSupport />} />
@@ -74,6 +75,7 @@ function App() {
                   <Route path="/admin-sales-analytics" element={<AdminSalesAnalytics />} />
                   <Route path="/admin-post-product" element={<AdminPostProduct />} />
                   <Route path="/admin-offer-create" element={<AdminOfferCreate />} />
+                  <Route path="/admin-edit-product/:id" element={<AdminEditProduct />} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />

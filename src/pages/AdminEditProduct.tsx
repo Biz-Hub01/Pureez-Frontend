@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { 
   Form, 
   FormControl, 
@@ -31,6 +31,7 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 
 // Form validation schema
@@ -43,11 +44,13 @@ const productSchema = z.object({
   room: z.string().optional(),
   location: z.string().min(1, "Please enter a location"),
   usedFor: z.string().optional(),
+  // stock: z.coerce.number().int().min(1, "Stock must be at least 1"),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
-const AdminPostProduct = () => {
+const AdminEditProduct = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -56,29 +59,9 @@ const AdminPostProduct = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [isProcessingVideos, setIsProcessingVideos] = useState(false);
-  const [user, setUser] = useState(null);
+  const [loadingProduct, setLoadingProduct] = useState(true);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-  
-    useEffect(() => {
-    checkAdmin();
-  }, []);
-
-  const checkAdmin = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user || user.email !== 'admin@declutteratpureez.com') {
-        navigate('/admin-login');
-        return;
-      }
-
-      setUser(user);
-    } catch (error) {
-      console.error('Error checking admin access:', error);
-      navigate('/admin-login');
-    }
-  };
 
   // Form handling
   const form = useForm<ProductFormValues>({
@@ -92,44 +75,90 @@ const AdminPostProduct = () => {
       room: "",
       location: "Nairobi, Kenya",
       usedFor: "",
+      // stock: 1,
     },
   });
-  
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProduct = async () => {
+      setLoadingProduct(true);
+      try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        toast({
+          title: "Product not found",
+          description: "The product you're trying to edit doesn't exist",
+          variant: "destructive",
+        });
+        navigate('/admin-dashboard');
+        return;
+      }
+
+      // Set form values
+      form.reset({
+        title: data.title,
+        price: data.price,
+        description: data.description,
+        condition: data.condition,
+        category: data.category,
+        room: data.room || "",
+        location: data.location,
+        usedFor: data.used_for || "",
+        // stock: data.stock || 1,
+      });
+
+      // Set existing media
+        setImagePreviews(data.images || []);
+        setVideoPreviews(data.videos || []);
+
+    } catch (error: any) {
+        console.error("Error fetching product:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load product",
+          variant: "destructive",
+        });
+        navigate("/admin-dashboard");
+      } finally {
+        setLoadingProduct(false);    
+    }
+  };
+
+  fetchProduct();
+  }, [id, form, navigate]);
+
   const onSubmit = async (data: ProductFormValues) => {
-    if (imageFiles.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please upload at least one product image",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to post products",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    if (!id) return;
+    
     setIsSubmitting(true);
 
+    // Similar to AdminPostProduct but with update
     try {
-      // Upload media files and get URLs
-      const imageUrls = await Promise.all(
+      // Upload new media files and get URLs
+      const newImageUrls = await Promise.all(
         imageFiles.map(file => uploadFile(file, 'images'))
       );
       
-      const videoUrls = videoFiles.length > 0
-        ? await Promise.all(videoFiles.map(file => uploadFile(file, 'videos')))
-        : [];
+      const newVideoUrls = await Promise.all(
+        videoFiles.map(file => uploadFile(file, 'videos'))
+      );
 
-      // Create the product in the database
-      const { data: product, error } = await supabase
+      // Combine existing and new media
+      const allImageUrls = [...imagePreviews.filter(p => !p.startsWith('blob:')), ...newImageUrls];
+      const allVideoUrls = [...videoPreviews.filter(p => !p.startsWith('blob:')), ...newVideoUrls];
+
+      // Update the product in the database
+      const { error } = await supabase
         .from('products')
-        .insert({
+        .update({
           title: data.title,
           description: data.description,
           price: Number(data.price),
@@ -138,51 +167,39 @@ const AdminPostProduct = () => {
           room: data.room || null,
           location: data.location,
           used_for: data.usedFor || null,
-          images: imageUrls,
-          videos: videoUrls,
-          admin_id: user.id,
+          images: allImageUrls,
+          videos: allVideoUrls,
+          // stock: data.stock,
         })
-        .select()
-        .single();
+        .eq('id', id);
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
+      // ... handle success/error
+      if (error) throw error;
 
       toast({
-        title: "Product Posted Successfully",
-        description: "Your product has been posted and is now live!",
+        title: "Product Updated Successfully",
+        description: "Your product has been updated!",
       });
-      
-      // Reset form
-      form.reset();
-      setImageFiles([]);
-      setImagePreviews([]);
-      setVideoFiles([]);
-      setVideoPreviews([]);
       
       // Redirect to admin dashboard
       navigate("/admin-dashboard");
-      
-    } catch (error: any) {
-      console.error("Error posting product:", error);
+
+    } catch (error) {
+      // ... error handling ...
+      console.error("Error updating product:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to post product. Please try again.",
+        description: error.message || "Failed to update product. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  const uploadFile = async (file: File, type: 'images' | 'videos'): Promise<string> => {
-    if (!user) throw new Error("User not authenticated");
-    
-    const bucketName = 'product-media';
 
-    const fileName = `${user.id}/${type}/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+  const uploadFile = async (file: File, type: 'images' | 'videos'): Promise<string> => {
+    const bucketName = 'product-media';
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
 
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -271,7 +288,7 @@ const AdminPostProduct = () => {
     setVideoFiles(prev => prev.filter((_, i) => i !== index));
     setVideoPreviews(prev => prev.filter((_, i) => i !== index));
   };
-  
+
   // Define form options
   const conditions = [
     "New with tags", 
@@ -308,7 +325,7 @@ const AdminPostProduct = () => {
     "Utility"
   ];
 
-  if (!user) {
+  if (loadingProduct) {
     return (
       <>
         <Navbar />
@@ -316,7 +333,7 @@ const AdminPostProduct = () => {
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-foreground/70">Checking admin access...</p>
+              <p className="text-foreground/70">Loading product...</p>
             </div>
           </div>
         </div>
@@ -324,15 +341,15 @@ const AdminPostProduct = () => {
       </>
     );
   }
-
+  
   return (
     <>
       <Navbar />
       <div className="container mx-auto px-4 py-24">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Post a New Product</h1>
-            <p className="text-foreground/70">List a new item as Declutter at Pureez</p>
+            <h1 className="text-3xl font-bold mb-2">Edit Product</h1>
+            <p className="text-foreground/70">Update product details</p>
           </div>
           
           <div className="glass-card p-8 rounded-xl shadow-sm">
@@ -486,6 +503,25 @@ const AdminPostProduct = () => {
                       )}
                     />
                     
+                    {/* <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stock Quantity</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="1" 
+                              placeholder="e.g. 5" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    /> */}
+                    
                     <FormField
                       control={form.control}
                       name="condition"
@@ -637,12 +673,12 @@ const AdminPostProduct = () => {
                     {isSubmitting ? (
                       <>
                         <Loader2 size={18} className="animate-spin" />
-                        Posting...
+                        Updating...
                       </>
                     ) : (
                       <>
                         <Save size={18} />
-                        Post Product
+                        Update Product
                       </>
                     )}
                   </Button>
@@ -657,4 +693,8 @@ const AdminPostProduct = () => {
   );
 };
 
-export default AdminPostProduct;
+export default AdminEditProduct;
+
+// function uploadFile(file: File, arg1: string): any {
+//   throw new Error("Function not implemented.");
+// }

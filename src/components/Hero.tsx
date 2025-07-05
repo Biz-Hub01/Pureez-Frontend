@@ -7,8 +7,8 @@ const Hero = () => {
     <section className="relative pt-10 pb-16 sm:pt-28 sm:pb-20 md:pt-36 md:pb-24 lg:pt-44 lg:pb-28 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/0 to-background z-0" />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+      <div className="container mx-auto px-0">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6">
           <div className="inline-block animate-fade-in">
             <span className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-orangeBrand/10 text-orangeBrand text-xs sm:text-sm font-medium">
               A better way to buy & sell
@@ -42,7 +42,7 @@ const Hero = () => {
           </div>
         </div>
         
-        <div className="mt-12 sm:mt-16 md:mt-20 lg:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-fade-in animate-delay-400 px-2 sm:px-0">
+        <div className="mt-12 sm:mt-16 md:mt-20 lg:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-fade-in animate-delay-400 px-4 sm:px-6">
           <div className="glass-card p-4 sm:p-6 rounded-2xl">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="sm:w-6 sm:h-6">

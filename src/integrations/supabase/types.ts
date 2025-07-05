@@ -9,36 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      contact_messages: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-          read: boolean
-          subject: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          message: string
-          name: string
-          read?: boolean
-          subject: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          read?: boolean
-          subject?: string
-        }
-        Relationships: []
-      }
       products: {
         Row: {
           category: string
@@ -50,8 +20,7 @@ export type Database = {
           location: string
           price: number
           room: string | null
-          seller_id: string
-          status: string
+          admin_id: string
           stock: number
           title: string
           updated_at: string
@@ -68,8 +37,7 @@ export type Database = {
           location: string
           price: number
           room?: string | null
-          seller_id: string
-          status?: string
+          admin_id: string
           stock?: number
           title: string
           updated_at?: string
@@ -86,15 +54,19 @@ export type Database = {
           location?: string
           price?: number
           room?: string | null
-          seller_id?: string
-          status?: string
+          admin_id?: string
           stock?: number
           title?: string
           updated_at?: string
           used_for?: string | null
           videos?: string[] | null
         }
-        Relationships: []
+        Relationships: [{
+            foreignKeyName: "products_admin_id_fkey"
+            columns: ["admin_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }]
       }
       // Add this to the Tables section
 orders: {
@@ -136,117 +108,7 @@ orders: {
   };
   Relationships: [];
 }
-      seller_auctions: {
-        Row: {
-          created_at: string
-          current_bid: number | null
-          description: string | null
-          end_date: string
-          id: string
-          product_id: string
-          seller_id: string
-          start_date: string
-          starting_price: number
-          status: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          current_bid?: number | null
-          description?: string | null
-          end_date: string
-          id?: string
-          product_id: string
-          seller_id: string
-          start_date?: string
-          starting_price: number
-          status?: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          current_bid?: number | null
-          description?: string | null
-          end_date?: string
-          id?: string
-          product_id?: string
-          seller_id?: string
-          start_date?: string
-          starting_price?: number
-          status?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      seller_offers: {
-        Row: {
-          created_at: string
-          description: string | null
-          discount_percentage: number
-          end_date: string
-          id: string
-          product_id: string
-          seller_id: string
-          start_date: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          discount_percentage: number
-          end_date: string
-          id?: string
-          product_id: string
-          seller_id: string
-          start_date?: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          discount_percentage?: number
-          end_date?: string
-          id?: string
-          product_id?: string
-          seller_id?: string
-          start_date?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      seller_profiles: {
-        Row: {
-          address: string | null
-          business_name: string | null
-          created_at: string
-          id: string
-          phone: string | null
-          updated_at: string
-          user_id: string
-          verified: boolean
-        }
-        Insert: {
-          address?: string | null
-          business_name?: string | null
-          created_at?: string
-          id?: string
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-          verified?: boolean
-        }
-        Update: {
-          address?: string | null
-          business_name?: string | null
-          created_at?: string
-          id?: string
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-          verified?: boolean
-        }
-        Relationships: []
-      }
+      
     }
     Views: {
       [_ in never]: never

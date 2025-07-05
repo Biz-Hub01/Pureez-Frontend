@@ -13,7 +13,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="container mx-auto px-0 py-4 sm:py-8">
       <Navbar />
       
       <main className="flex-1">

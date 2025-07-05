@@ -144,8 +144,7 @@ const Catalog = () => {
       let query = supabase
         .from('products')
         .select('*')
-        .eq('status', 'approved'); // Only show approved products
-
+      
       // Apply filters
       if (selectedCategory !== "all") {
         query = query.eq('category', selectedCategory);
@@ -253,7 +252,7 @@ const Catalog = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-24">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Product Catalog</h1>

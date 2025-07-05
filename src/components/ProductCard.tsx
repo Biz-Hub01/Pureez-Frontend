@@ -172,7 +172,7 @@ const ProductCard = ({
 
   return (
     <Link to={`/product/${id}`} className={cn("block", className)}>
-      <div className="glass-card rounded-xl overflow-hidden transition-all hover:shadow-lg hover:scale-[1.02]">
+      <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden transition-all hover:shadow-lg hover:scale-[1.02]">
         <div className="relative">
           <img
             src={imageSrc}
@@ -213,19 +213,19 @@ const ProductCard = ({
           )}
         </div>
         <div className="p-4">
-          <h3 className="font-medium line-clamp-1 hover:text-primary transition-colors">{title}</h3>
+          <h3 className="font-medium line-clamp-2 hover:text-primary transition-colors h-12">{title}</h3>
           <div className="flex justify-between items-center mt-2">
             <div>
               {originalPrice ? (
                 <div className="flex flex-col">
                   <p className="text-sm line-through text-red-500">{formatPrice(originalPrice)}</p>
-                  <p className="text-primary font-semibold text-green-500">{formatPrice(price)}</p>
+                  <p className="font-semibold text-green-500">{formatPrice(price)}</p>
                 </div>
               ) : (
                 <p className="text-primary font-semibold">{formatPrice(price)}</p>
               )}
             </div>
-            <p className="text-sm text-foreground/70">{location}</p>
+            <p className="text-sm font-semibold truncate max-w-[180px] text-foreground/70">{location}</p>
           </div>
           
           <div className="mt-2 flex items-center justify-between">

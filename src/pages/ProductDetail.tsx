@@ -22,10 +22,6 @@ interface Product {
   description: string;
   features: string[];
   images: string[];
-  sellerInfo: {
-    name: string;
-    joinedDate: string;
-  };
   videos: string[];
   stock: number;
   created_at: string;
@@ -46,7 +42,6 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [activeImage, setActiveImage] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
-  const [listingsCount, setListingsCount] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -71,30 +66,6 @@ const ProductDetail = () => {
         throw productError || new Error("Product not found");
       }
 
-      // Fetch seller info
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('seller_profiles')
-        .select('*')
-        .eq('user_id', productData.seller_id)
-        .single();
-
-      if (sellerError) {
-        console.error("Error fetching seller:", sellerError);
-      }
-
-      // Fetch seller's listings count
-      let listings = 0;
-      if (productData.seller_id) {
-        const { count, error: countError } = await supabase
-          .from('products')
-          .select('*', { count: 'exact' })
-          .eq('seller_id', productData.seller_id);
-        
-        if (!countError && count !== null) {
-          listings = count;
-        }
-      }
-
       const formattedProduct: Product = {
         id: productData.id,
         title: productData.title,
@@ -109,10 +80,6 @@ const ProductDetail = () => {
           productData.used_for && `Used for: ${productData.used_for}`
         ].filter(Boolean) as string[],
         images: productData.images,
-        sellerInfo: {
-          name: sellerData?.business_name || "Unknown Seller",
-          joinedDate: new Date(sellerData?.created_at || new Date()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-        },
         videos: productData.videos || [],
         stock: productData.stock || 1,
         created_at: productData.created_at,
@@ -122,7 +89,6 @@ const ProductDetail = () => {
       };
 
       setProduct(formattedProduct);
-      setListingsCount(listings);
 
       // Fetch related products
       const { data: relatedData, error: relatedError } = await supabase
@@ -160,7 +126,6 @@ const ProductDetail = () => {
       title: product.title,
       price: product.price,
       image: product.images[0],
-      seller: product.sellerInfo.name,
       stock: product.stock
     });
     
@@ -261,7 +226,7 @@ const ProductDetail = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-1 bg-background pt-24 pb-16">
+      <main className="flex-1 bg-background pt-4 pb-16">
         <div className="container mx-auto px-4">
           {/* Breadcrumb */}
           <div className="text-sm text-foreground/70 mb-6">
@@ -384,26 +349,6 @@ const ProductDetail = () => {
                       </li>
                     ))}
                   </ul>
-                </div>
-                
-                <div className="mt-6 glass-card p-4 rounded-lg">
-                  <h3 className="font-medium text-lg mb-3">Seller Information</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="bg-secondary w-12 h-12 rounded-full flex items-center justify-center">
-                      <span className="font-medium">{product.sellerInfo.name.charAt(0)}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{product.sellerInfo.name}</p>
-                      <div className="flex items-center gap-2 text-sm text-foreground/70">
-                        <span>{listingsCount} listings</span>
-                        <span>•</span>
-                        <span>Joined {product.sellerInfo.joinedDate}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="mt-4 w-full">
-                    Contact Seller
-                  </Button>
                 </div>
                 
                 <div className="mt-6">

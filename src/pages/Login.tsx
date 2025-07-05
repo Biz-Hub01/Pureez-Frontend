@@ -227,8 +227,8 @@ const Login = () => {
                 </h1>
                 <p className="mt-2 text-foreground/70">
                   {isLogin 
-                    ? "Sign in to your account to continue" 
-                    : "Join Declutter at Pureez to start buying or selling"
+                    ? "Sign in to your account to continue buying" 
+                    : "Join Declutter at Pureez to start buying"
                   }
                 </p>
               </div>
