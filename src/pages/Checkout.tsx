@@ -282,19 +282,14 @@ const Checkout = () => {
       clearInterval(verificationIntervalRef.current);
     }
 
-  let attempts = 0;
-  const maxAttempts = 18; // 3 minutes (5s * 36)
-
     verificationIntervalRef.current = setInterval(async () => {
       try {
-        attempts++;
-
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/mpesa/payment-status/${checkoutRequestId}`
         );
 
         if (response.data.status === 'success') {
-          clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
+          clearInterval(verificationIntervalRef.current!);
           setPaymentStatus('success');
 
           // Create order only after successful payment verification
@@ -302,53 +297,20 @@ const Checkout = () => {
           if (orderId) {
             clearCart();
             navigate(`/order-confirmation/${orderId}`);
-          } else {
-          toast({
-            title: "Order Creation Failed",
-            description: "Payment succeeded but order could not be created",
-            variant: "destructive"
-          });
-        }
+          }
         } else if (response.data.status === 'failed') {
-          clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
+          clearInterval(verificationIntervalRef.current!);
           setPaymentStatus('failed');
           toast({
             title: "Payment Failed",
             description: "Payment was not completed",
             variant: "destructive"
           });
-        } else if (response.data.status === 'pending') {
-        // Continue polling - no action needed
-        console.log(`Payment ${checkoutRequestId} still pending...`);
-      }
-      else {
-        // Handle unknown status
-        console.warn("Unknown payment status:", response.data.status);
-      }
-       
-      if (attempts >= maxAttempts) {
-          clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
-          setPaymentStatus('failed');
-          toast({
-            title: "Payment Timeout",
-            description: "Payment verification timed out",
-            variant: "destructive"
-          });
         }
       } catch (error) {
         console.error("Payment verification error:", error);
-        
-        if (attempts >= maxAttempts) {
-        clearInterval(verificationIntervalRef.current as NodeJS.Timeout);
-        setPaymentStatus('failed');
-        toast({
-          title: "Verification Error",
-          description: "Failed to verify payment status",
-          variant: "destructive"
-        });
       }
-      }
-    }, 10000); // Check every 5 seconds
+    }, 10000); // Check every 10 seconds
   };
 
   const createOrder = async (paymentReference: string | null): Promise<string> => {
